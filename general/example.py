@@ -1,11 +1,6 @@
-from general.graph import Graph
+from general.structures import BinaryTree, Node
 
-G = Graph()
+tree = BinaryTree()
 
-G.add_edge([0,1])
-G.add_edge([1,3])
-G.vertices = 4
-G.delete_edge([2,1])
-
-for e in G.edges:
-    print(e)
+tree.right_node = Node(0)
+tree.left_node = Node(1)
