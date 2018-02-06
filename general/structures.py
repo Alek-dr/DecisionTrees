@@ -41,21 +41,21 @@ class Node():
 class BinaryTree():
 
     def __init__(self):
-        self.__left_node = None
-        self.__right_node = None
+        self._left_node = None
+        self._right_node = None
 
     @property
     def left_node(self):
-        return self.__left_node
+        return self._left_node
 
     @property
     def right_node(self):
-        return self.__left_node
+        return self._left_node
 
     @left_node.setter
     def left_node(self, node):
-        self.__left_node = node
+        self._left_node = node
 
     @right_node.setter
     def right_node(self, node):
-        self.__right_node = node
+        self._right_node = node
