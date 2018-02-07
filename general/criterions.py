@@ -4,7 +4,7 @@ from numpy import nan, inf
 def enthropy(df,S,states):
     entr = 0
     n = df.shape[0]
-    for i in range(states):
+    for i in states:
         ds = df[df[S]==i]
         m = ds.shape[0]
         if n!=0 and m!=0:
