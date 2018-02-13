@@ -4,6 +4,8 @@ from numpy import nan, inf
 def enthropy(df,S,states):
     entr = 0
     n = df.shape[0]
+    if isinstance(states,(int,float)):
+        states = [states]
     for i in states:
         ds = df[df[S]==i]
         m = ds.shape[0]

@@ -1,5 +1,4 @@
 from general.structures import DecisionBinaryTree
-from general.criterions import enthropy
 from preprocess.convert import convert_categorial
 
 class DecisonTree():
@@ -17,13 +16,13 @@ class DecisonTree():
         df, self.categories = convert_categorial(df)
 
         for col in df:
-            s = len(df[col].unique())
-            self.states[col] = s
+            if col in self.categories:
+                s = len(df[col].unique())
+                self.states[col] = s
 
         self.tree = DecisionBinaryTree()
-        self.tree._id = 0
         self.tree.makeID3(df,self.target,self.categories,self.states)
-        #self.tree.dfs(self.tree)
+        self.tree.reset_counter()
 
     def print_tree(self):
         self.tree.print_tree()
