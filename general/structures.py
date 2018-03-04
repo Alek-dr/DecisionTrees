@@ -35,10 +35,46 @@ class Graph():
 class Node():
     def __init__(self,id):
         self.__id = id
+        self.__type = "leaf"
+        self.__y = 0
+        self.__predicate = None
+        self.__samples = 0
 
     @property
     def id(self):
         return self.__id
+
+    @property
+    def type(self):
+        return self.__type
+
+    @type.setter
+    def type(self,t):
+        self.__type = t
+
+    @property
+    def label(self):
+        return self.__y
+
+    @label.setter
+    def label(self,l):
+        self.__y = l
+
+    @property
+    def predicate(self):
+        return self.__predicate
+
+    @predicate.setter
+    def predicate(self,p):
+        self.__predicate = p
+
+    @property
+    def samples(self):
+        return self.__samples
+
+    @samples.setter
+    def samples(self,n):
+        self.__samples = n
 
 class BinaryTree():
 
@@ -77,24 +113,18 @@ class DecisionBinaryTree(BinaryTree):
 
     def __init__(self):
         BinaryTree.__init__(self)
-        self._type = "leaf"
-        self._y = 0
-        self._predicate = None
-        self._samples = 0
-
-    @property
-    def type(self):
-        return self._type
+        self.node = Node(self.id)
 
     def makeID3(self,df,target,categories,states):
 
         unique = df[target].unique()
 
         if len(unique) == 1:
-            self._y = df[target][df.index.values[0]]
-            self._samples = df.shape[0]
+            self.node.label = df[target][df.index.values[0]]
+            self.node.samples = df.shape[0]
         else:
-            self._type = "internal"
+            self.node.type = "internal"
+            #self._type = "internal"
             gain = {}
             col_tresh = {}
             st = [i for i in range(states[target])]
@@ -150,7 +180,7 @@ class DecisionBinaryTree(BinaryTree):
                 max_enthropy = max(enthropy_state, key=enthropy_state.get)
                 # Left node <state != max_enthropy_state>
                 # Right node <state == max_enthropy_state>
-                self._predicate = beta + " = " + str(max_enthropy)
+                self.node.predicate = beta + " = " + str(max_enthropy)
                 left_subs = df.loc[(df[beta] != max_enthropy)]
                 right_subs = df.loc[(df[beta] == max_enthropy)]
                 prob = {}
@@ -164,16 +194,16 @@ class DecisionBinaryTree(BinaryTree):
                         prob[i] = df[df[target] == i].shape[0] / m
                 # If node is leaf
                 if len(prob)>0:
-                    self._predicate = None
-                    self._type = "leaf"
-                    self._y = max(prob, key=prob.get)
+                    self.node.predicate = Node
+                    self.node.type = "leaf"
+                    self.node.label = max(prob, key=prob.get)
                 else:
                     self.left_node = DecisionBinaryTree()
                     self.right_node = DecisionBinaryTree()
                     self.left_node.makeID3(left_subs,target,categories,states)
                     self.right_node.makeID3(right_subs,target,categories,states)
             else:
-                self._predicate = beta + " <= " + str(col_tresh[beta])
+                self.node.predicate = beta + " <= " + str(col_tresh[beta])
                 left_subs = df.loc[(df[beta] <= col_tresh[beta])]
                 right_subs = df.loc[(df[beta] > col_tresh[beta])]
                 prob = {}
@@ -187,15 +217,14 @@ class DecisionBinaryTree(BinaryTree):
                         prob[i] = df[df[target] == i].shape[0] / m
                 # If node is leaf
                 if len(prob)>0:
-                    self._predicate = None
-                    self._type = "leaf"
-                    self._y = max(prob, key=prob.get)
+                    self.node.predicate = Node
+                    self.node.type = "leaf"
+                    self.node.label = max(prob, key=prob.get)
                 else:
                     self.left_node = DecisionBinaryTree()
                     self.right_node = DecisionBinaryTree()
                     self.left_node.makeID3(left_subs,target,categories,states)
                     self.right_node.makeID3(right_subs,target,categories,states)
-
 
     def print_tree(self):
         pass
