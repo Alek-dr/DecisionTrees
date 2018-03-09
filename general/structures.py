@@ -124,7 +124,6 @@ class DecisionBinaryTree(BinaryTree):
             self.node.samples = df.shape[0]
         else:
             self.node.type = "internal"
-            #self._type = "internal"
             gain = {}
             col_tresh = {}
             st = [i for i in range(states[target])]
@@ -183,48 +182,40 @@ class DecisionBinaryTree(BinaryTree):
                 self.node.predicate = beta + " = " + str(max_enthropy)
                 left_subs = df.loc[(df[beta] != max_enthropy)]
                 right_subs = df.loc[(df[beta] == max_enthropy)]
-                prob = {}
-                if left_subs.empty:
-                    m = right_subs.shape[0]
-                    for i in range(states[target]):
-                        prob[i] = df[df[target] == i].shape[0] / m
-                if right_subs.empty:
-                    m = left_subs.shape[0]
-                    for i in range(states[target]):
-                        prob[i] = df[df[target] == i].shape[0] / m
-                # If node is leaf
-                if len(prob)>0:
-                    self.node.predicate = Node
-                    self.node.type = "leaf"
-                    self.node.label = max(prob, key=prob.get)
-                else:
-                    self.left_node = DecisionBinaryTree()
-                    self.right_node = DecisionBinaryTree()
-                    self.left_node.makeID3(left_subs,target,categories,states)
-                    self.right_node.makeID3(right_subs,target,categories,states)
             else:
                 self.node.predicate = beta + " <= " + str(col_tresh[beta])
                 left_subs = df.loc[(df[beta] <= col_tresh[beta])]
                 right_subs = df.loc[(df[beta] > col_tresh[beta])]
-                prob = {}
-                if left_subs.empty:
-                    m = right_subs.shape[0]
-                    for i in range(states[target]):
-                        prob[i] = df[df[target] == i].shape[0] / m
-                if right_subs.empty:
-                    m = left_subs.shape[0]
-                    for i in range(states[target]):
-                        prob[i] = df[df[target] == i].shape[0] / m
-                # If node is leaf
-                if len(prob)>0:
-                    self.node.predicate = Node
-                    self.node.type = "leaf"
-                    self.node.label = max(prob, key=prob.get)
-                else:
-                    self.left_node = DecisionBinaryTree()
-                    self.right_node = DecisionBinaryTree()
-                    self.left_node.makeID3(left_subs,target,categories,states)
-                    self.right_node.makeID3(right_subs,target,categories,states)
+
+            prob = {}
+            if left_subs.empty:
+                m = right_subs.shape[0]
+                for i in range(states[target]):
+                    prob[i] = df[df[target] == i].shape[0] / m
+            if right_subs.empty:
+                m = left_subs.shape[0]
+                for i in range(states[target]):
+                    prob[i] = df[df[target] == i].shape[0] / m
+            # If node is leaf
+            if len(prob)>0:
+                self.node.predicate = Node
+                self.node.type = "leaf"
+                self.node.label = max(prob, key=prob.get)
+            else:
+                self.left_node = DecisionBinaryTree()
+                self.right_node = DecisionBinaryTree()
+                self.left_node.makeID3(left_subs,target,categories,states)
+                self.right_node.makeID3(right_subs,target,categories,states)
 
     def print_tree(self):
         pass
+
+    def get_vertices(self,v,vertices=[],edges=[]):
+        if v.node.id not in vertices:
+            vertices.append(v.node.id)
+            if v.node.type!="leaf":
+                edges.append([v.node.id, v.left_node.id])
+                edges.append([v.node.id,v.right_node.id])
+                self.get_vertices(v.left_node,vertices,edges)
+                self.get_vertices(v.right_node,vertices,edges)
+        return vertices,edges

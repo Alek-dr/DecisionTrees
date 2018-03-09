@@ -1,12 +1,14 @@
 import pandas as pd
 from trees.decison_trees import DecisonTree
 
-data_set = pd.read_csv('datasets/zenit.csv')
+#data_set = pd.read_csv('datasets/zenit.csv')
+data_set = pd.read_csv('datasets/Iris.csv')
 
 tree = DecisonTree()
 
-#data_set.drop("Id",axis=1,inplace=True)
+data_set.drop("Id",axis=1,inplace=True)
 
-tree.learnID3(data_set,'win')
+tree.learnID3(data_set,'Species')
 
-print(tree)
+print(tree.edges)
+print(tree.vertices)
