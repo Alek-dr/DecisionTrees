@@ -1,5 +1,6 @@
 from general.structures import DecisionBinaryTree
 from preprocess.convert import convert_categorial
+from numpy import ravel
 
 class DecisonTree():
 
@@ -39,22 +40,16 @@ class DecisonTree():
     def edges(self):
         return self.__edges
 
-    @vertices.setter
-    def vertices(self, num_vertices):
-        if num_vertices > 0:
-            self.__vertices = num_vertices
-        else:
-            raise Exception("Vertices numbers must be above zero")
+    def get_node(self,id):
+        return self.tree.get_node(self.tree,id)
 
-    def add_edge(self, edge):
-        if isinstance(edge, list) and (len(edge) == 2):
-            self.__edges.append(edge)
-
-    def delete_edge(self, edge):
-        if edge in self.__edges:
-            self.__edges.remove(edge)
-        else:
-            raise Exception("Edge not in graph")
+    def get_child(self,id):
+        child = []
+        for edg in self.edges:
+            if edg[0]==id:
+                child.append(edg[1:])
+        child = ravel(child).tolist()
+        return child
 
 
 

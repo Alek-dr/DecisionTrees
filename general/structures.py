@@ -207,9 +207,6 @@ class DecisionBinaryTree(BinaryTree):
                 self.left_node.makeID3(left_subs,target,categories,states)
                 self.right_node.makeID3(right_subs,target,categories,states)
 
-    def print_tree(self):
-        pass
-
     def get_vertices(self,v,vertices=[],edges=[]):
         if v.node.id not in vertices:
             vertices.append(v.node.id)
@@ -219,3 +216,16 @@ class DecisionBinaryTree(BinaryTree):
                 self.get_vertices(v.left_node,vertices,edges)
                 self.get_vertices(v.right_node,vertices,edges)
         return vertices,edges
+
+    def get_node(self,v,id):
+        if v.node.id==id:
+            return v.node
+        else:
+            if v.left_node is not None:
+                node = self.get_node(v.left_node,id)
+                if node:
+                    return node
+            if v.right_node is not None:
+                node = self.get_node(v.right_node,id)
+                if node:
+                    return node
