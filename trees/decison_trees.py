@@ -13,7 +13,7 @@ class DecisonTree():
         self.__vertices = 0
         self.__edges = []
 
-    def learnID3(self,df,target_class):
+    def learnID3(self,df,target_class,min_samples = 4):
 
         self.target = target_class
         df, self.categories = convert_categorial(df)
@@ -24,7 +24,7 @@ class DecisonTree():
                 self.states[col] = s
 
         self.tree = DecisionBinaryTree()
-        self.tree.makeID3(df,self.target,self.categories,self.states)
+        self.tree.makeID3(df,self.target,self.categories,self.states,min_samples)
         self.tree.reset_counter()
 
         self.__vertices, self.__edges = self.tree.get_vertices(v=self.tree)

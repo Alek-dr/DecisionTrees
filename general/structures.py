@@ -36,9 +36,11 @@ class Node():
     def __init__(self,id):
         self.__id = id
         self.__type = "leaf"
-        self.__y = 0
+        self.__y = None
         self.__predicate = None
         self.__samples = 0
+        self.__categorical = False
+        self.__prob = None
 
     @property
     def id(self):
@@ -75,6 +77,22 @@ class Node():
     @samples.setter
     def samples(self,n):
         self.__samples = n
+
+    @property
+    def categorical(self):
+        return self.__categorical
+
+    @categorical.setter
+    def categorical(self,v):
+        self.__categorical = v
+
+    @property
+    def probability(self):
+        return self.__prob
+
+    @probability.setter
+    def probability(self,v):
+        self.__prob = v
 
 class BinaryTree():
 
@@ -115,7 +133,7 @@ class DecisionBinaryTree(BinaryTree):
         BinaryTree.__init__(self)
         self.node = Node(self.id)
 
-    def makeID3(self,df,target,categories,states):
+    def makeID3(self,df,target,categories,states,min_samples):
 
         unique = df[target].unique()
 
@@ -124,6 +142,7 @@ class DecisionBinaryTree(BinaryTree):
             self.node.samples = df.shape[0]
         else:
             self.node.type = "internal"
+            self.node.samples = df.shape[0]
             gain = {}
             col_tresh = {}
             st = [i for i in range(states[target])]
@@ -180,6 +199,7 @@ class DecisionBinaryTree(BinaryTree):
                 # Left node <state != max_enthropy_state>
                 # Right node <state == max_enthropy_state>
                 self.node.predicate = beta + " = " + str(max_enthropy)
+                self.node.categorical = True
                 left_subs = df.loc[(df[beta] != max_enthropy)]
                 right_subs = df.loc[(df[beta] == max_enthropy)]
             else:
@@ -198,14 +218,21 @@ class DecisionBinaryTree(BinaryTree):
                     prob[i] = df[df[target] == i].shape[0] / m
             # If node is leaf
             if len(prob)>0:
-                self.node.predicate = Node
+                self.node.predicate = None
                 self.node.type = "leaf"
                 self.node.label = max(prob, key=prob.get)
+            elif len(left_subs) <= min_samples or len(right_subs) <= min_samples:
+                numb = df[target].value_counts()
+                self.node.predicate = None
+                self.node.type = "leaf"
+                self.node.label = numb.idxmax()
+                self.node.samples = df.shape[0]
+                self.node.probability = round(numb.max() / len(df), 2)
             else:
                 self.left_node = DecisionBinaryTree()
                 self.right_node = DecisionBinaryTree()
-                self.left_node.makeID3(left_subs,target,categories,states)
-                self.right_node.makeID3(right_subs,target,categories,states)
+                self.left_node.makeID3(left_subs,target,categories,states,min_samples)
+                self.right_node.makeID3(right_subs,target,categories,states,min_samples)
 
     def get_vertices(self,v,vertices=[],edges=[]):
         if v.node.id not in vertices:
