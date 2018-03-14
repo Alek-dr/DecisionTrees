@@ -1,4 +1,4 @@
-from general.structures import DecisionBinaryTree
+from trees_algorithms.algorithms import *
 from preprocess.convert import convert_categorial
 from numpy import ravel
 
@@ -10,10 +10,8 @@ class DecisonTree():
         self.target = None
         self.states = {}
         self.name = "Decision tree"
-        self.__vertices = 0
-        self.__edges = []
 
-    def learnID3(self,df,target_class,min_samples = 4):
+    def learnID3(self,df,target_class,min_samples=4):
 
         self.target = target_class
         df, self.categories = convert_categorial(df)
@@ -23,25 +21,29 @@ class DecisonTree():
                 s = len(df[col].unique())
                 self.states[col] = s
 
-        self.tree = DecisionBinaryTree()
-        self.tree.makeID3(df,self.target,self.categories,self.states,min_samples)
-        self.tree.reset_counter()
+        self.tree = Tree()
+        self.tree.id3(df,self.target,self.categories,parent_id=0,states=self.states)
 
-        self.__vertices, self.__edges = self.tree.get_vertices(v=self.tree)
+        # self.tree = DecisionBinaryTree()
+        # self.tree.makeID3(df,self.target,self.categories,self.states,min_samples)
+        # self.tree.reset_counter()
+        #
+        # self.__vertices, self.__edges = self.tree.get_vertices(v=self.tree)
 
     def print_tree(self):
         self.tree.print_tree()
 
     @property
     def vertices(self):
-        return self.__vertices
+        return self.tree.vertices
+
 
     @property
     def edges(self):
-        return self.__edges
+        return self.tree.edges
 
     def get_node(self,id):
-        return self.tree.get_node(self.tree,id)
+        return self.tree.get_node(id)
 
     def get_child(self,id):
         child = []
