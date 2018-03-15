@@ -1,7 +1,7 @@
 from general.structures import *
-from general.criterions import enthropy
+from general.criterions import entropy
 from general.help_functions import get_subdictionary
-from numpy import abs, round, arange, average
+from numpy import abs, round, arange, average, log2
 
 class DecisionBinaryTree(BinaryTree):
 
@@ -22,7 +22,7 @@ class DecisionBinaryTree(BinaryTree):
             gain = {}
             col_tresh = {}
             st = [i for i in range(states[target])]
-            initial_entropy = enthropy(df, target, st)
+            initial_entropy = entropy(df, target, st)
             for col in df:
                 if col != target:
                     if col in categories:
@@ -32,7 +32,7 @@ class DecisionBinaryTree(BinaryTree):
                             dq = df[df[col] == i]
                             num = dq.shape[0]
                             den = df.shape[0]
-                            h += (num / den) * enthropy(dq, target, st)
+                            h += (num / den) * entropy(dq, target, st)
                         gain[col] = initial_entropy - h
                     else:
                         step = round((abs(df[col].min())+abs(df[col].max()))/(df[col].shape[0]),5)
@@ -46,12 +46,12 @@ class DecisionBinaryTree(BinaryTree):
                             dq = df[df[col] <= i]
                             num = dq.shape[0]
                             den = df.shape[0]
-                            h += (num / den) * enthropy(dq, target, st)
+                            h += (num / den) * entropy(dq, target, st)
 
                             dq = df[df[col] > i]
                             num = dq.shape[0]
                             den = df.shape[0]
-                            h += (num / den) * enthropy(dq, target, st)
+                            h += (num / den) * entropy(dq, target, st)
 
                             tresh_entr[i] = h
                         min_entr_key = min(tresh_entr, key=tresh_entr.get)
@@ -64,20 +64,20 @@ class DecisionBinaryTree(BinaryTree):
             beta = max(gain, key=gain.get)
             # If predicat cateogrial
             if beta in categories.keys():
-                enthropy_state = {}
-                # For each possible state find enthropy
+                entropy_state = {}
+                # For each possible state find entropy
                 for i in range(states[beta]):
                     sub = df[df[beta]==i]
-                    H = enthropy(sub,target,[i])
-                    enthropy_state[i] = H
-                # Get state with max enthropy
-                max_enthropy = max(enthropy_state, key=enthropy_state.get)
-                # Left node <state != max_enthropy_state>
-                # Right node <state == max_enthropy_state>
-                self.node.predicate = beta + " = " + str(max_enthropy)
+                    H = entropy(sub,target,[i])
+                    entropy_state[i] = H
+                # Get state with max entropy
+                max_entropy = max(entropy_state, key=entropy_state.get)
+                # Left node <state != max_entropy_state>
+                # Right node <state == max_entropy_state>
+                self.node.predicate = beta + " = " + str(max_entropy)
                 self.node.categorical = True
-                left_subs = df.loc[(df[beta] != max_enthropy)]
-                right_subs = df.loc[(df[beta] == max_enthropy)]
+                left_subs = df.loc[(df[beta] != max_entropy)]
+                right_subs = df.loc[(df[beta] == max_entropy)]
             else:
                 self.node.predicate = beta + " <= " + str(col_tresh[beta])
                 left_subs = df.loc[(df[beta] <= col_tresh[beta])]
@@ -138,7 +138,7 @@ class Tree(Graph):
     def __init__(self):
         Graph.__init__(self)
 
-    def id3(self,df,target,categories,parent_id,states,pred_value=None,parent_predicate=None):
+    def id3(self,df,target,categories,parent_id,states,criteria="enthropy", pred_value=None,parent_predicate=None):
         """
         Return graph what represents decision tree.
 
@@ -199,17 +199,26 @@ class Tree(Graph):
 
         gain = {}
         st = [i for i in range(states[target])]
-        initial_entropy = enthropy(df, target, st)
-        for attribute in categories:
-            if attribute != target:
-                q = [i for i in range(states[attribute])]
-                h = 0
-                for i in q:
-                    dq = df[df[attribute] == i]
-                    num = dq.shape[0]
-                    den = df.shape[0]
-                    h += (num / den) * enthropy(dq, target, st)
-                gain[attribute] = initial_entropy - h
+
+        if criteria=="entropy" or criteria=="gain_ratio":
+            initial_entropy = entropy(df, target, st)
+            for attribute in df:
+                if attribute != target:
+                    q = [i for i in range(states[attribute])]
+                    h = 0
+                    split_info = 0
+                    for i in q:
+                        dq = df[df[attribute] == i]
+                        num = dq.shape[0]
+                        den = df.shape[0]
+                        p = num / den
+                        h += p*entropy(dq, target, st)
+                        if criteria=="gain_ratio":
+                            split_info+=-p*log2(num / den)
+                    if criteria=="gain_ratio":
+                        gain[attribute] = (initial_entropy - h)/split_info
+                    elif criteria=="entropy":
+                        gain[attribute] = initial_entropy - h
 
         # Find predicate
         beta = max(gain, key=gain.get)
@@ -229,8 +238,8 @@ class Tree(Graph):
 
         # Making arcs
         sub_categories = get_subdictionary(categories,beta)
-        # For each possible state find enthropy
+        # For each possible state find entropy
         for i in range(states[beta]):
             sub_set = df[df[beta] == i].drop(beta,axis=1)
-            self.id3(sub_set,target,sub_categories,node.id,states,i,beta)
+            self.id3(sub_set,target,sub_categories,node.id,states,criteria,i,beta)
 

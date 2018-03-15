@@ -1,9 +1,9 @@
-rival,game,leader,rain,win
-high,home,yes,yes,no
-high,home,yes,no,yes
-high,home,no,no,yes
-low,home,no,no,yes
-low,guest,no,no,no
-low,home,no,yes,yes
-high,guest,yes,yes,no
+day,rival,game,leader,rain,win
+1,high,home,yes,yes,no
+2,high,home,yes,no,yes
+3,high,home,no,no,yes
+4,low,home,no,no,yes
+5,low,guest,no,no,no
+6,low,home,no,yes,yes
+7,high,guest,yes,yes,no
 

@@ -11,10 +11,10 @@ class DecisonTree():
         self.states = {}
         self.name = "Decision tree"
 
-    def learnID3(self,df,target_class,min_samples=4):
+    def learnID3(self,df,target_class,criteria="entropy",as_categories=[],min_samples=4):
 
         self.target = target_class
-        df, self.categories = convert_categorial(df)
+        df, self.categories = convert_categorial(df,as_categories)
 
         for col in df:
             if col in self.categories:
@@ -22,7 +22,7 @@ class DecisonTree():
                 self.states[col] = s
 
         self.tree = Tree()
-        self.tree.id3(df,self.target,self.categories,parent_id=0,states=self.states)
+        self.tree.id3(df,self.target,self.categories,parent_id=0,states=self.states,criteria=criteria)
 
         # self.tree = DecisionBinaryTree()
         # self.tree.makeID3(df,self.target,self.categories,self.states,min_samples)
@@ -36,7 +36,6 @@ class DecisonTree():
     @property
     def vertices(self):
         return self.tree.vertices
-
 
     @property
     def edges(self):

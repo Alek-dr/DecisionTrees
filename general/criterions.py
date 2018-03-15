@@ -1,7 +1,7 @@
 from numpy import log2
 from numpy import nan, inf
 
-def enthropy(df,S,states):
+def entropy(df,S,states):
     entr = 0
     n = df.shape[0]
     if isinstance(states,(int,float)):
@@ -14,6 +14,8 @@ def enthropy(df,S,states):
             if j not in (nan, inf, -inf):
                 entr+=(m/n)*j
     return -entr
+
+
 
 
 
