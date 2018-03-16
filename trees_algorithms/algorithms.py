@@ -1,5 +1,5 @@
 from general.structures import *
-from general.criterions import entropy
+from general.criterions import entropy, gini
 from general.help_functions import get_subdictionary
 from numpy import abs, round, arange, average, log2
 
@@ -197,28 +197,35 @@ class Tree(Graph):
                 node.parent_predicate = parent_predicate
             return
 
-        gain = {}
+        gain = {} # Gain actually can be gini index or gain ratio
         st = [i for i in range(states[target])]
 
-        if criteria=="entropy" or criteria=="gain_ratio":
-            initial_entropy = entropy(df, target, st)
-            for attribute in df:
-                if attribute != target:
-                    q = [i for i in range(states[attribute])]
-                    h = 0
-                    split_info = 0
-                    for i in q:
-                        dq = df[df[attribute] == i]
-                        num = dq.shape[0]
-                        den = df.shape[0]
-                        p = num / den
-                        h += p*entropy(dq, target, st)
-                        if criteria=="gain_ratio":
-                            split_info+=-p*log2(num / den)
+        if criteria == "entropy" or criteria == "gain_ratio":
+            initial_estimation = entropy(df, target, st)
+        elif criteria == 'gini':
+            initial_estimation = gini(df, target, st)
+
+        #initial_entropy = entropy(df, target, st)
+        for attribute in df:
+            if attribute != target:
+                q = [i for i in range(states[attribute])]
+                h = 0
+                split_info = 0
+                for i in q:
+                    dq = df[df[attribute] == i]
+                    num = dq.shape[0]
+                    den = df.shape[0]
+                    p = num / den
+                    if criteria == "entropy" or criteria == "gain_ratio":
+                        h += p*entropy(dq,target,st)
+                    elif criteria == 'gini':
+                        h += p*gini(dq,target,st)
                     if criteria=="gain_ratio":
-                        gain[attribute] = (initial_entropy - h)/split_info
-                    elif criteria=="entropy":
-                        gain[attribute] = initial_entropy - h
+                        split_info += -p*log2(num / den)
+                if criteria=="gain_ratio":
+                    gain[attribute] = (initial_estimation - h)/split_info
+                elif criteria=="entropy" or criteria=="gini":
+                    gain[attribute] = initial_estimation - h
 
         # Find predicate
         beta = max(gain, key=gain.get)

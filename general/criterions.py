@@ -1,13 +1,13 @@
-from numpy import log2
+from numpy import log2, square
 from numpy import nan, inf
 
-def entropy(df,S,states):
+def entropy(df,s,states):
     entr = 0
     n = df.shape[0]
     if isinstance(states,(int,float)):
         states = [states]
     for i in states:
-        ds = df[df[S]==i]
+        ds = df[df[s]==i]
         m = ds.shape[0]
         if n!=0 and m!=0:
             j = log2(m/n)
@@ -15,7 +15,17 @@ def entropy(df,S,states):
                 entr+=(m/n)*j
     return -entr
 
-
+def gini(df,s,states):
+    g = 1
+    n = df.shape[0]
+    if isinstance(states,(int,float)):
+        states = [states]
+    for i in states:
+        ds = df[df[s]==i]
+        m = ds.shape[0]
+        if m!=0:
+            g -= square(m/n)
+    return g
 
 
 
