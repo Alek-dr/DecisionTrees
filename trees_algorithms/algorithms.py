@@ -201,11 +201,8 @@ class Tree(Graph):
         st = [i for i in range(states[target])]
 
         if criteria == "entropy" or criteria == "gain_ratio":
-            initial_estimation = entropy(df, target, st)
-        elif criteria == 'gini':
-            initial_estimation = gini(df, target, st)
+            initial_entropy = entropy(df, target, st)
 
-        #initial_entropy = entropy(df, target, st)
         for attribute in df:
             if attribute != target:
                 q = [i for i in range(states[attribute])]
@@ -220,12 +217,14 @@ class Tree(Graph):
                         h += p*entropy(dq,target,st)
                     elif criteria == 'gini':
                         h += p*gini(dq,target,st)
-                    if criteria=="gain_ratio":
+                    if criteria == "gain_ratio":
                         split_info += -p*log2(num / den)
-                if criteria=="gain_ratio":
-                    gain[attribute] = (initial_estimation - h)/split_info
-                elif criteria=="entropy" or criteria=="gini":
-                    gain[attribute] = initial_estimation - h
+                if criteria == "gain_ratio":
+                    gain[attribute] = (initial_entropy - h)/split_info
+                elif criteria == "entropy":
+                    gain[attribute] = initial_entropy - h
+                elif criteria == "gini":
+                    gain[attribute] = h
 
         # Find predicate
         beta = max(gain, key=gain.get)
@@ -245,7 +244,7 @@ class Tree(Graph):
 
         # Making arcs
         sub_categories = get_subdictionary(categories,beta)
-        # For each possible state find entropy
+        # For each possible state get subset
         for i in range(states[beta]):
             sub_set = df[df[beta] == i].drop(beta,axis=1)
             self.id3(sub_set,target,sub_categories,node.id,states,criteria,i,beta)
