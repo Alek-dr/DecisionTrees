@@ -1,5 +1,6 @@
-from numpy import log2, square
-from numpy import nan, inf
+from numpy import log2, square, nan, inf
+
+criterions = ['entropy','gain_ratio','gini']
 
 def entropy(df,s,states):
     entr = 0

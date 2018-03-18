@@ -1,5 +1,5 @@
 from general.structures import *
-from general.criterions import entropy, gini
+from general.criterions import entropy, gini, criterions
 from general.help_functions import get_subdictionary
 from numpy import abs, round, arange, average, log2
 
@@ -138,7 +138,7 @@ class Tree(Graph):
     def __init__(self):
         Graph.__init__(self)
 
-    def id3(self,df,target,categories,parent_id,states,criteria="enthropy", pred_value=None,parent_predicate=None):
+    def __id3__(self,df,target,categories,parent_id,states,criteria="enthropy", pred_value=None,parent_predicate=None):
         """
         Return graph what represents decision tree.
 
@@ -164,6 +164,8 @@ class Tree(Graph):
         -------
         decision tree
         """
+        if criteria not in criterions:
+            criteria = 'gini'
 
         if len(self.vertices)==0:
             node_id = 0
@@ -171,7 +173,11 @@ class Tree(Graph):
             node_id = len(self.vertices)
 
         if df.empty:
-            node = Node(id=node_id,label="Error")
+            node = Node(id=node_id,label='-')
+            if pred_value!=None:
+                node.pred_value = pred_value
+            if parent_predicate!=None:
+                node.parent_predicate = parent_predicate
             self.add_vertex(node)
             self.add_edge([parent_id,node_id])
             return
@@ -187,7 +193,7 @@ class Tree(Graph):
             self.add_edge([parent_id, node.id])
             return
 
-        if len(categories)==0:
+        if len(categories)==0 or (len(categories)==1 and target in categories):
             numb = df[target].value_counts()
             prob = round(numb.max() / len(df), 2)
             node = Node(node_id,label=numb.idxmax(),samples=df.shape[0],prob=prob)
@@ -195,13 +201,17 @@ class Tree(Graph):
                 node.pred_value = pred_value
             if parent_predicate!=None:
                 node.parent_predicate = parent_predicate
+            self.add_vertex(node)
+            self.add_edge([parent_id, node.id])
             return
 
         gain = {} # Gain actually can be gini index or gain ratio
         st = [i for i in range(states[target])]
 
-        if criteria == "entropy" or criteria == "gain_ratio":
-            initial_entropy = entropy(df, target, st)
+        if criteria == 'entropy' or criteria == 'gain_ratio':
+            initial_estimation = entropy(df, target, st)
+        else:
+            initial_estimation = gini(df, target, st)
 
         for attribute in df:
             if attribute != target:
@@ -213,18 +223,18 @@ class Tree(Graph):
                     num = dq.shape[0]
                     den = df.shape[0]
                     p = num / den
-                    if criteria == "entropy" or criteria == "gain_ratio":
+                    if criteria == 'entropy' or criteria == 'gain_ratio':
                         h += p*entropy(dq,target,st)
                     elif criteria == 'gini':
                         h += p*gini(dq,target,st)
-                    if criteria == "gain_ratio":
-                        split_info += -p*log2(num / den)
-                if criteria == "gain_ratio":
-                    gain[attribute] = (initial_entropy - h)/split_info
-                elif criteria == "entropy":
-                    gain[attribute] = initial_entropy - h
-                elif criteria == "gini":
-                    gain[attribute] = h
+                    if criteria == 'gain_ratio':
+                        if p!=0:
+                            # Do not find log2 of zero
+                            split_info += -p*log2(p)
+                if criteria == 'gain_ratio':
+                    gain[attribute] = (initial_estimation - h)/split_info
+                elif criteria == 'entropy' or criteria == 'gini':
+                    gain[attribute] = initial_estimation - h
 
         # Find predicate
         beta = max(gain, key=gain.get)
@@ -232,6 +242,8 @@ class Tree(Graph):
         # Make the node
         node = Node(id=node_id, type='internal',predicate=beta,
                     samples=df.shape[0],categorial=True)
+        node.criteria = round(gain[beta],4)
+
         if pred_value != None:
             node.pred_value = pred_value
         if parent_predicate != None:
@@ -247,5 +259,25 @@ class Tree(Graph):
         # For each possible state get subset
         for i in range(states[beta]):
             sub_set = df[df[beta] == i].drop(beta,axis=1)
-            self.id3(sub_set,target,sub_categories,node.id,states,criteria,i,beta)
+            self.__id3__(sub_set,target,sub_categories,node.id,states,criteria,i,beta)
+
+    def __predict__(self,sample,node,categories):
+        """
+        :param sample: Series sample to classify.
+        :param node: current node.
+        :param categories: dictionary from DecisionTrees.
+        :return: class label.
+        """
+        if node.type!='leaf':
+            p = node.predicate
+            val = sample[p]
+            child = self.get_child(node.id)
+            for ch in child:
+                node = self.get_node(ch)
+                if node.pred_value==val:
+                    return self.__predict__(sample,node,categories)
+        else:
+            return node.label
+
+
 

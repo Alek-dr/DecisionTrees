@@ -2,15 +2,17 @@ import pandas as pd
 from trees.decison_trees import DecisonTree
 from general import dot_convertor
 
-#data_set = pd.read_csv('datasets/zenit.csv')
-#data_set = pd.read_csv('datasets/Iris.csv')
 data_set = pd.read_csv('datasets/PlayTennis.csv')
 
 tree = DecisonTree()
 
-#data_set.drop("Id",axis=1,inplace=True)
-#data_set.drop("day",axis=1,inplace=True)
+data_set.drop("Day",axis=1,inplace=True)
+sample = data_set.copy()
 
-tree.learnID3(data_set,'Play', as_categories=["Day"], criteria='gain_ratio')
-#tree.learnID3(data_set,'win', criteria='gini')
-#dot_convertor.export(tree,"gini_zenit")
+tree.learnID3(data_set,'Play', criteria='gini')
+
+for _,row in sample.iterrows():
+    label = tree.predict(row)
+    print(label)
+
+dot_convertor.export(tree,"gini_tennis")

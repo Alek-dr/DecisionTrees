@@ -1,3 +1,5 @@
+from numpy import ravel
+
 class Graph():
 
     def __init__(self):
@@ -31,6 +33,18 @@ class Graph():
             if node.id == id:
                 return node
 
+    def get_child(self,id):
+        """
+        :param id:
+        :return: list of child ids
+        """
+        child = []
+        for edg in self.__edges:
+            if edg[0]==id:
+                child.append(edg[1:])
+        child = ravel(child).tolist()
+        return child
+
 class Node():
     def __init__(self,id,type='leaf',label=None,predicate=None,samples=0,categorial=False,prob=None):
         self.__id = id
@@ -42,6 +56,15 @@ class Node():
         self.__prob = prob
         self.__predicate_value = None
         self.__parent_predicate = None
+        self.__criteria_value = None
+
+    @property
+    def criteria(self):
+        return self.__criteria_value
+
+    @criteria.setter
+    def criteria(self,v):
+        self.__criteria_value = v
 
     @property
     def parent_predicate(self):
