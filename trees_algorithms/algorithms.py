@@ -229,7 +229,7 @@ class Tree(Graph):
                         h += p*gini(dq,target,st)
                     if criteria == 'gain_ratio':
                         if p!=0:
-                            # Do not find log2 of zero
+                            # Do not try to get log2 of zero
                             split_info += -p*log2(p)
                 if criteria == 'gain_ratio':
                     gain[attribute] = (initial_estimation - h)/split_info
