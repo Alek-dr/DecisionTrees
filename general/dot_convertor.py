@@ -22,6 +22,8 @@ def add_node_label(node,categories,target,criteria,write_index=False,write_samle
                 label += "Gain ratio = {}\n".format(node.criteria)
             elif criteria=='gini':
                 label += "Gini = {}\n".format(node.criteria)
+            elif criteria=='D':
+                label += "D = {}\n".format(node.criteria)
     if write_samles==True:
         if node.samples!=None:
             label+="Samples = {}\n".format(node.samples)

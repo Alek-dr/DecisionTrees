@@ -3,7 +3,7 @@ from preprocess.convert import convert_categorial
 from numpy import ravel
 from general.criterions import criterions
 from general.help_functions import *
-from pandas import DataFrame,Series
+from pandas import Series
 
 class DecisonTree():
 
@@ -38,7 +38,7 @@ class DecisonTree():
     def predict(self,sample):
         label = ''
         if isinstance(sample,Series):
-            sample = convert(sample,self.categories,self.columns)
+            sample = convert(sample,self.categories)
             if isinstance(self.tree,Tree):
                 root = self.tree.get_node(0)
                 label = self.tree.__predict__(sample,root,self.categories)
