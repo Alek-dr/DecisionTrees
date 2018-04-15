@@ -267,6 +267,191 @@ class Tree(Graph):
             sub_set = df[df[beta] == i].drop(beta,axis=1)
             self.__id3__(sub_set,target,sub_categories,node.id,states,criteria,i,beta)
 
+    def __c45__(self,df,target,categories,parent_id,states,criteria="enthropy", pred_value=None,parent_predicate=None, isBigger=None):
+        """
+        Return graph what represents decision tree.
+
+        Parameters
+        ----------
+
+        df: pandas dataframe.
+            Train dataset
+        target: string.
+            Column of df. Target feature.
+        categories: dictionary.
+            contains corresponds between categorical and numeric values.
+        parent_id: int.
+            parent node id.
+        states: dictionary.
+             contains attributes and all possible states.
+        pred_value: float.
+            value of parent predicate to get into this node.
+        parent_predicate: string.
+            parent node predicate.
+        isBigger: bool.
+            if parent predicat is continous then is Bigger defines left or right subset.
+
+        Returns
+        -------
+        decision tree
+        """
+        if criteria not in criterions:
+            criteria = 'gini'
+
+        if len(self.vertices)==0:
+            node_id = 0
+        else:
+            node_id = len(self.vertices)
+
+        if df.empty:
+            node = Node(id=node_id,label='-')
+            if pred_value!=None:
+                node.pred_value = pred_value
+            if parent_predicate!=None:
+                node.parent_predicate = parent_predicate
+            self.add_vertex(node)
+            self.add_edge([parent_id,node_id])
+            return
+
+        unique = df[target].unique()
+        if len(unique) == 1:
+            if isBigger==None:
+                categorial = True
+            else:
+                categorial = False
+            node = Node(node_id,label=df[target][df.index.values[0]],samples=df.shape[0],categorial=categorial)
+            if pred_value!=None and parent_predicate!=None:
+                if categorial:
+                    node.pred_value = pred_value
+                else:
+                    if isBigger:
+                        node.pred_value = parent_predicate + '>' + str(pred_value)
+                    else:
+                        node.pred_value = parent_predicate + '<=' + str(pred_value)
+                node.parent_predicate = parent_predicate
+            self.add_vertex(node)
+            self.add_edge([parent_id, node.id])
+            return
+
+        if len(categories)==0 or (len(categories)==1 and target in categories):
+            numb = df[target].value_counts()
+            prob = round(numb.max() / len(df), 2)
+            node = Node(node_id,label=numb.idxmax(),samples=df.shape[0],prob=prob)
+            if pred_value!=None:
+                node.pred_value = pred_value
+            if parent_predicate!=None:
+                node.parent_predicate = parent_predicate
+            self.add_vertex(node)
+            self.add_edge([parent_id, node.id])
+            return
+
+        col_tresh = {} # For continous attributes
+        gain = {} # Gain actually can be gini index or gain ratio
+        st = [i for i in range(states[target])]
+
+        if criteria == 'entropy' or criteria == 'gain_ratio':
+            initial_estimation = entropy(df, target, st)
+        elif criteria == 'gini':
+            initial_estimation = gini(df, target, st)
+
+        for attribute in df:
+            if attribute != target:
+                if attribute in categories:
+                    q = [i for i in range(states[attribute])]
+                    h = 0
+                    if criteria == 'D':
+                        h = D(df,attribute,target,q)
+                        gain[attribute] = h
+                    else:
+                        split_info = 0
+                        for i in q:
+                            dq = df[df[attribute] == i]
+                            num = dq.shape[0]
+                            den = df.shape[0]
+                            p = num / den
+                            if criteria == 'entropy' or criteria == 'gain_ratio':
+                                h += p*entropy(dq,target,st)
+                            elif criteria == 'gini':
+                                h += p*gini(dq,target,st)
+                            elif criteria == 'D':
+                                h += p*D(dq,target,st)
+                            if criteria == 'gain_ratio':
+                                if p!=0:
+                                    # Do not try to get log2 of zero
+                                    split_info += -p*log2(p)
+                        if criteria == 'gain_ratio':
+                            gain[attribute] = (initial_estimation - h)/split_info
+                        elif criteria == 'entropy' or criteria == 'gini':
+                            gain[attribute] = initial_estimation - h
+                else:
+                    step = round((abs(df[attribute].min()) + abs(df[attribute].max())) / (df[attribute].shape[0]), 5)
+                    q = list(arange(df[attribute].min(), df[attribute].max(), step).round(5))
+                    if df[attribute].min() == df[attribute].max():
+                        continue
+                    tresh_entr = {}
+                    for i in q:
+                        h = 0
+                        dq = df[df[attribute] <= i]
+                        num = dq.shape[0]
+                        den = df.shape[0]
+                        h += (num / den) * entropy(dq, target, st)
+
+                        dq = df[df[attribute] > i]
+                        num = dq.shape[0]
+                        den = df.shape[0]
+                        h += (num / den) * entropy(dq, target, st)
+
+                        tresh_entr[i] = h
+
+                    min_entr_key = min(tresh_entr, key=tresh_entr.get)
+                    min_entr = tresh_entr[min_entr_key]
+                    # Find keys with min entropy
+                    keys = [k for k, v in tresh_entr.items() if v == min_entr]
+                    col_tresh[attribute] = round(average(keys), 3)
+                    gain[attribute] = initial_estimation - tresh_entr[min_entr_key]
+
+        # Find predicate
+        beta = max(gain, key=gain.get)
+        if beta in categories.keys():
+            categorial = True
+        else:
+            categorial = False
+
+        # Make the node
+        node = Node(id=node_id, type='internal',predicate=beta,
+                    samples=df.shape[0],categorial=categorial)
+        node.criteria = round(gain[beta],4)
+
+        if pred_value != None:
+            if isBigger==None:
+                node.pred_value = pred_value
+            else:
+                if isBigger==True:
+                    node.pred_value = parent_predicate + '>' + str(pred_value)
+                else:
+                    node.pred_value = parent_predicate + '<=' + str(pred_value)
+
+        if parent_predicate != None:
+            node.parent_predicate = parent_predicate
+
+        # Add node to the graph
+        self.add_vertex(node)
+        if node_id!=0:
+            self.add_edge([parent_id,node.id])
+
+        # Making arcs
+        sub_categories = get_subdictionary(categories,beta)
+        # For each possible state get subset
+        if beta in categories.keys():
+            for i in range(states[beta]):
+                sub_set = df[df[beta] == i].drop(beta,axis=1)
+                self.__c45__(sub_set,target,sub_categories,node.id,states,criteria,i,beta)
+        else:
+            sub_set = df.loc[(df[beta] <= col_tresh[beta])]
+            self.__c45__(sub_set, target, sub_categories, node.id, states, criteria, col_tresh[beta], beta, isBigger=False)
+            sub_set = df.loc[(df[beta] > col_tresh[beta])]
+            self.__c45__(sub_set, target, sub_categories, node.id, states, criteria, col_tresh[beta], beta, isBigger=True)
+
     def __predict__(self,sample,node,categories):
         """
         :param sample: Series sample to classify.

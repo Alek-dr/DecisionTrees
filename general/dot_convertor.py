@@ -6,11 +6,14 @@ def add_node_label(node,categories,target,criteria,write_index=False,write_samle
     if write_index==True:
         label += "Id = {}\n".format(node.id)
     if node.parent_predicate!=None:
-        states = categories[node.parent_predicate]
-        for k,v in states.items():
-            if v==node.pred_value:
-                label += "{} = {}\n".format(node.parent_predicate,k)
-                break
+        if node.parent_predicate in categories.keys():
+            states = categories[node.parent_predicate]
+            for k,v in states.items():
+                if v==node.pred_value:
+                    label += "{} = {}\n".format(node.parent_predicate,k)
+                    break
+        else:
+            label += "{}\n".format(node.pred_value)
     if node.type=='internal':
         if node.predicate!=None:
             label += "Predicate = {}\n".format(node.predicate)
