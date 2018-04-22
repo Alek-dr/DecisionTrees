@@ -1,0 +1,15 @@
+Day,Outlook,Temperature,Humidity,Wind,Play
+1,Sunny,Hot,85,Weak,No
+2,Sunny,Hot,90,Strong,No
+3,Overcast,Hot,78,Weak,Yes
+4,Rain,Mild,96,Weak,Yes
+5,Rain,Cool,80,Weak,Yes
+6,Rain,Cool,70,Strong,No
+7,Overcast,Cool,65,Strong,Yes
+8,Sunny,Mild,95,Weak,No
+9,Sunny,Cool,70,Weak,Yes
+10,Rain,Mild,80,Weak,Yes
+11,Sunny,Mild,70,Strong,Yes
+12,Overcast,Mild,90,Strong,Yes
+13,Overcast,Hot,75,Weak,Yes
+14,Rain,Mild,80,Strong,No

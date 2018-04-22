@@ -12,8 +12,9 @@ def get_category(categories,key,val):
 
 def convert(sample,convert_rules):
     for col in sample.iteritems():
+        if col[0] not in convert_rules:
+            continue
         states = convert_rules[col[0]]
         code = states[col[1]]
         sample[col[0]] = code
-
     return sample

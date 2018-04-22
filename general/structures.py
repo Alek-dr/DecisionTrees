@@ -57,6 +57,18 @@ class Node():
         self.__predicate_value = None
         self.__parent_predicate = None
         self.__criteria_value = None
+        self.__isBigger = None
+
+    @property
+    def isBigger(self):
+        return self.__isBigger
+
+    @isBigger.setter
+    def isBigger(self,v):
+        if isinstance(v,bool):
+            self.__isBigger = v
+        else:
+            pass
 
     @property
     def criteria(self):

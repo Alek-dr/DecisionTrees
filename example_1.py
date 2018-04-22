@@ -9,10 +9,10 @@ tree = DecisonTree()
 data_set.drop("Day",axis=1,inplace=True)
 sample = data_set.copy()
 
-tree.learnC45(data_set,'Play', criteria='entropy')
+tree.learnC45(data_set,'Play', criteria='D')
 
-# for _,row in sample.iterrows():
-#     label = tree.predict(row)
-#     print(label)
-#
-dot_convertor.export(tree,"e_tennis2")
+for i,row in sample.iterrows():
+    label = tree.predict(row)
+    print('{} {}'.format(i+1,label))
+
+dot_convertor.export(tree,"d_tennis2")

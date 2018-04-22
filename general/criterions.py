@@ -38,11 +38,19 @@ def D(df,attribute,target,states):
         if df.empty:
             break
         for _,row in sub.iterrows():
-            print(row)
             diff = (df[target]!=row[target])
             d += diff[diff==True].shape[0]
     return d
 
+def D_continous(df,attribute,target,trsh):
+    d = 0
+    sub = df[df[attribute] <= trsh]
+    df = df[df[attribute] > trsh]
+    if not df.empty:
+        for _,row in sub.iterrows():
+            diff = (df[target]!=row[target])
+            d += diff[diff==True].shape[0]
+    return d
 
 
 
