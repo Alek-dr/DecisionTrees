@@ -45,8 +45,23 @@ class Graph():
         child = ravel(child).tolist()
         return child
 
+    def get_depth(self):
+        if len(self.vertices)==0:
+            return 0
+        vertices = [self.vertices[0]]
+        max_depth = 1
+        for v in vertices:
+            ch_id = self.get_child(v.id)
+            vertices.pop()
+            if len(ch_id)>0:
+                max_depth+=1
+            for ch in ch_id:
+                vertices.append(self.get_node(ch))
+        return max_depth
+
 class Node():
-    def __init__(self,id,type='leaf',label=None,predicate=None,samples=0,categorial=False,prob=None):
+
+    def __init__(self,id,type='leaf',label=None,predicate=None,samples=0,categorial=False,prob=None, isBigger=None):
         self.__id = id
         self.__type = type
         self.__y = label
@@ -54,10 +69,10 @@ class Node():
         self.__samples = samples
         self.__categorical = categorial
         self.__prob = prob
+        self.__isBigger = isBigger
         self.__predicate_value = None
         self.__parent_predicate = None
         self.__criteria_value = None
-        self.__isBigger = None
 
     @property
     def isBigger(self):

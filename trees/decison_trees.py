@@ -9,11 +9,7 @@ class DecisonTree():
 
     def __init__(self):
         self.tree = None
-        self.categories = {}
-        self.target = None
-        self.states = {}
         self.name = "Decision tree"
-        self.criteria = None
         self.columns = []
 
     def learnID3(self,df,target_class,criteria="entropy",as_categories=[]):
@@ -35,24 +31,32 @@ class DecisonTree():
         self.tree = Tree()
         self.tree.__id3__(df,self.target,self.categories,parent_id=0,states=self.states,criteria=criteria)
 
-    def learnC45(self,df,target_class,criteria="entropy",as_categories=[]):
+    def learnC45(self,df,target_class,params):
 
-        self.target = target_class
-
-        if criteria not in criterions:
-            self.criteria = 'gini'
+        criteria = params['criteria']
+        if 'as_categories' in params:
+            as_categories = params['as_categories']
         else:
-            self.criteria = criteria
-        self.columns = df.columns
-        df, self.categories = convert_categorial(df,as_categories)
+            as_categories = []
 
+        self.columns = df.columns
+        df, categories = convert_categorial(df,as_categories)
+
+        states = {}
         for col in df:
-            if col in self.categories:
+            if col in categories:
                 s = len(df[col].unique())
-                self.states[col] = s
+                states[col] = s
 
         self.tree = Tree()
-        self.tree.__c45__(df,self.target,self.categories,parent_id=0,states=self.states,criteria=criteria)
+        self.tree.target = target_class
+        if 'max_depth' in params:
+            self.tree.max_depth = params['max_depth']
+        if criteria in criterions:
+            self.tree.criteria = criteria
+        self.tree.categories = categories
+        self.tree.states = states
+        self.tree.__c45__(df, parent_id=0)
 
     def predict(self,sample):
         label = ''

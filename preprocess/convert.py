@@ -25,9 +25,13 @@ def convert_categorial(df,as_categories=[]):
                 class_code[l] = i
             feature_class_code[col] = class_code
 
-            for i in range(df.shape[0]):
+            for i, row in df.iterrows():
                 label = df.loc[i][col]
-                df.loc[i, col] = class_code[label]
+                df.loc[i,col] = class_code[label]
+
+            # for i in range(df.shape[0]):
+            #     label = df.iloc[i][col]
+            #     df.iloc[i][col] = class_code[label]
     return df, feature_class_code
 
 

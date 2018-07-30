@@ -53,16 +53,16 @@ def export(graph,name):
 
     if isinstance(graph.tree,Tree):
         for v in graph.vertices:
-            dot += str(v.id) + add_node_label(v,graph.categories,graph.target,graph.criteria,
+            dot += str(v.id) + add_node_label(v,graph.tree.categories,graph.tree.target,graph.tree.criteria,
                                               write_index=True,write_samles=True,write_criteria=True)
             child = graph.get_child(v.id)
             for ch in child:
                 child_node = graph.get_node(ch)
-                dot += str(child_node.id) +  add_node_label(child_node,graph.categories,graph.target, graph.criteria,
+                dot += str(child_node.id) +  add_node_label(child_node,graph.tree.categories,graph.tree.target, graph.tree.criteria,
                                                             write_index=True,write_samles=True, write_criteria=True)
                 dot += "{} -> {};\n".format(v.id, child_node.id)
         dot += '}'
 
-    text_file = open(name + ".dot", "w")
-    text_file.write(dot)
-    text_file.close()
+    with open(name + ".dot", "w") as output:
+        output.write(dot)
+        output.close()
