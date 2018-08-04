@@ -1,0 +1,1 @@
+dot -Tpng output/tree/zenit.dot -o output/tree_img/zenit.png

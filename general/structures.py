@@ -45,6 +45,20 @@ class Graph():
         child = ravel(child).tolist()
         return child
 
+    def get_parent(self,id):
+        for edg in self.edges:
+            if edg[1]==id:
+                return edg[0]
+        return -1
+
+    def get_rel_depth(self,id):
+        depth = 1
+        parent = self.get_parent(id)
+        while parent!=-1:
+            depth+=1
+            parent = self.get_parent(parent)
+        return depth
+
     def get_depth(self):
         if len(self.vertices)==0:
             return 0

@@ -336,19 +336,6 @@ class Tree(Graph):
 
         features = df.columns.values
         if len(features)==0 or (len(features)==1 and self.target in features and len(df.columns)==1):
-            # numb = df[self.target].value_counts()
-            # prob = round(numb.max() / len(df), 2)
-            #
-            # if isBigger==None:
-            #     categorial = True
-            # else:
-            #     categorial = False
-            #
-            # node = Node(node_id,label=numb.idxmax(),samples=df.shape[0],prob=prob, categorial=categorial,isBigger=isBigger)
-            # if pred_value!=None:
-            #     node.pred_value = pred_value
-            # if parent_predicate!=None:
-            #     node.parent_predicate = parent_predicate
             node = self.__make_node__(df,isBigger,node_id,pred_value,parent_predicate)
             self.add_vertex(node)
             self.add_edge([parent_id, node.id])
@@ -454,8 +441,10 @@ class Tree(Graph):
             categorial = False
 
         # Making arcs
-
-        depth = self.get_depth()
+        if node_id==0:
+            depth = 0
+        else:
+            depth = self.get_rel_depth(parent_id)
         if self.max_depth != -1 and depth == self.max_depth-1:
             node = self.__make_node__(df, isBigger, node_id, pred_value, parent_predicate)
             # Add node to the graph
@@ -487,6 +476,18 @@ class Tree(Graph):
             self.__c45__(sub_set, node.id, pred_value=col_tresh[beta], parent_predicate=beta, isBigger=False)
             sub_set = df[(df[beta] > col_tresh[beta])].drop(beta,axis=1)
             self.__c45__(sub_set, node.id, pred_value=col_tresh[beta], parent_predicate=beta, isBigger=True)
+
+    def isLeaf(self,df):
+        if df.empty:
+            return True
+        elif len(df[self.target].unique())==1:
+            return True
+        elif len(df.columns.values)==0 or (len(df.columns.values)==1
+                                           and self.target in df.columns.values
+                                           and len(df.columns)==1):
+            return True
+        else:
+            return False
 
     def __make_node__(self,df,isBigger,node_id,pred_value,parent_predicate):
         numb = df[self.target].value_counts()
