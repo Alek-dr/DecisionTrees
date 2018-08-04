@@ -139,6 +139,7 @@ class Tree(Graph):
         Graph.__init__(self)
         self.criteria = 'gini'
         self.max_depth = -1
+        self.min_samples = -1
         self.states = None
         self.categories = None
         self.target = None
@@ -318,18 +319,7 @@ class Tree(Graph):
 
         unique = df[self.target].unique()
         if len(unique) == 1:
-            if isBigger==None:
-                categorial = True
-            else:
-                categorial = False
-
-            node = Node(node_id,label=df[self.target][df.index.values[0]],
-                        samples=df.shape[0],categorial=categorial,isBigger=isBigger)
-
-            if pred_value!=None and parent_predicate!=None:
-                node.pred_value = pred_value
-                node.parent_predicate = parent_predicate
-
+            node = self.__make_node__(df, isBigger, node_id, pred_value, parent_predicate)
             self.add_vertex(node)
             self.add_edge([parent_id, node.id])
             return
@@ -337,6 +327,12 @@ class Tree(Graph):
         features = df.columns.values
         if len(features)==0 or (len(features)==1 and self.target in features and len(df.columns)==1):
             node = self.__make_node__(df,isBigger,node_id,pred_value,parent_predicate)
+            self.add_vertex(node)
+            self.add_edge([parent_id, node.id])
+            return
+
+        if df.shape[0] <= self.min_samples:
+            node = self.__make_node__(df, isBigger, node_id, pred_value, parent_predicate)
             self.add_vertex(node)
             self.add_edge([parent_id, node.id])
             return
@@ -477,22 +473,11 @@ class Tree(Graph):
             sub_set = df[(df[beta] > col_tresh[beta])].drop(beta,axis=1)
             self.__c45__(sub_set, node.id, pred_value=col_tresh[beta], parent_predicate=beta, isBigger=True)
 
-    def isLeaf(self,df):
-        if df.empty:
-            return True
-        elif len(df[self.target].unique())==1:
-            return True
-        elif len(df.columns.values)==0 or (len(df.columns.values)==1
-                                           and self.target in df.columns.values
-                                           and len(df.columns)==1):
-            return True
-        else:
-            return False
-
     def __make_node__(self,df,isBigger,node_id,pred_value,parent_predicate):
         numb = df[self.target].value_counts()
         prob = round(numb.max() / len(df), 2)
-
+        if prob == 1:
+            prob=None
         if isBigger == None:
             categorial = True
         else:
