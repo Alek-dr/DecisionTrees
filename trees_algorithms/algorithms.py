@@ -1,6 +1,5 @@
 from general.structures import *
 from general.criterions import entropy, gini, D, D_continous, criterions
-from general.help_functions import get_subdictionary
 from numpy import abs, round, arange, average, log2
 
 class DecisionBinaryTree(BinaryTree):
@@ -144,7 +143,7 @@ class Tree(Graph):
         self.categories = None
         self.target = None
 
-    def __id3__(self,df,target,categories,parent_id,states,criteria="enthropy", pred_value=None,parent_predicate=None):
+    def __id3__(self,df,parent_id, pred_value=None,parent_predicate=None):
         """
         Return graph what represents decision tree.
 
@@ -153,14 +152,8 @@ class Tree(Graph):
 
         df: pandas dataframe.
             Train dataset
-        target: string.
-            Column of df. Target feature.
-        categories: dictionary.
-            contains corresponds between categorical and numeric values.
         parent_id: int.
             parent node id.
-        states: dictionary.
-             contains attributes and all possible states.
         pred_value: int.
             value of parent predicate, to get in this node.
         parent_predicate: string.
@@ -170,8 +163,6 @@ class Tree(Graph):
         -------
         decision tree
         """
-        if criteria not in criterions:
-            criteria = 'gini'
 
         if len(self.vertices)==0:
             node_id = 0
@@ -188,9 +179,9 @@ class Tree(Graph):
             self.add_edge([parent_id,node_id])
             return
 
-        unique = df[target].unique()
+        unique = df[self.target].unique()
         if len(unique) == 1:
-            node = Node(node_id,label=df[target][df.index.values[0]],samples=df.shape[0],categorial=True)
+            node = Node(node_id,label=df[self.target][df.index.values[0]],samples=df.shape[0],categorial=True)
             if pred_value!=None:
                 node.pred_value = pred_value
             if parent_predicate!=None:
@@ -199,8 +190,8 @@ class Tree(Graph):
             self.add_edge([parent_id, node.id])
             return
 
-        if len(categories)==0 or (len(categories)==1 and target in categories):
-            numb = df[target].value_counts()
+        if len(self.categories)==0 or (len(self.categories)==1 and self.target in self.categories):
+            numb = df[self.target].value_counts()
             prob = round(numb.max() / len(df), 2)
             node = Node(node_id,label=numb.idxmax(),samples=df.shape[0],prob=prob)
             if pred_value!=None:
@@ -212,19 +203,19 @@ class Tree(Graph):
             return
 
         gain = {} # Gain actually can be gini index or gain ratio
-        st = [i for i in range(states[target])]
+        st = [i for i in range(self.states[self.target])]
 
-        if criteria == 'entropy' or criteria == 'gain_ratio':
-            initial_estimation = entropy(df, target, st)
-        elif criteria == 'gini':
-            initial_estimation = gini(df, target, st)
+        if self.criteria == 'entropy' or self.criteria == 'gain_ratio':
+            initial_estimation = entropy(df, self.target, st)
+        elif self.criteria == 'gini':
+            initial_estimation = gini(df, self.target, st)
 
         for attribute in df:
-            if attribute != target:
-                q = [i for i in range(states[attribute])]
+            if attribute != self.target:
+                q = [i for i in range(self.states[attribute])]
                 h = 0
-                if criteria == 'D':
-                    h = D(df,attribute,target,q)
+                if self.criteria == 'D':
+                    h = D(df,attribute,self.target,q)
                     gain[attribute] = h
                 else:
                     split_info = 0
@@ -233,19 +224,19 @@ class Tree(Graph):
                         num = dq.shape[0]
                         den = df.shape[0]
                         p = num / den
-                        if criteria == 'entropy' or criteria == 'gain_ratio':
-                            h += p*entropy(dq,target,st)
-                        elif criteria == 'gini':
-                            h += p*gini(dq,target,st)
-                        elif criteria == 'D':
-                            h += p*D(dq,target,st)
-                        if criteria == 'gain_ratio':
+                        if self.criteria == 'entropy' or self.criteria == 'gain_ratio':
+                            h += p*entropy(dq,self.target,st)
+                        elif self.criteria == 'gini':
+                            h += p*gini(dq,self.target,st)
+                        elif self.criteria == 'D':
+                            h += p*D(dq,self.target,st)
+                        if self.criteria == 'gain_ratio':
                             if p!=0:
                                 # Do not try to get log2 of zero
                                 split_info += -p*log2(p)
-                    if criteria == 'gain_ratio':
+                    if self.criteria == 'gain_ratio':
                         gain[attribute] = (initial_estimation - h)/split_info
-                    elif criteria == 'entropy' or criteria == 'gini':
+                    elif self.criteria == 'entropy' or self.criteria == 'gini':
                         gain[attribute] = initial_estimation - h
 
         # Find predicate
@@ -267,11 +258,10 @@ class Tree(Graph):
             self.add_edge([parent_id,node.id])
 
         # Making arcs
-        sub_categories = get_subdictionary(categories,beta)
         # For each possible state get subset
-        for i in range(states[beta]):
+        for i in range(self.states[beta]):
             sub_set = df[df[beta] == i].drop(beta,axis=1)
-            self.__id3__(sub_set,target,sub_categories,node.id,states,criteria,i,beta)
+            self.__id3__(sub_set,node.id,i,beta)
 
     def __c45__(self,df,parent_id, pred_value=None, parent_predicate=None, isBigger=None):
         """
@@ -282,10 +272,6 @@ class Tree(Graph):
 
         df: pandas dataframe.
             Train dataset
-        target: string.
-            Column of df. Target feature.
-        categories: dictionary.
-            contains corresponds between categorical and numeric values.
         parent_id: int.
             parent node id.
         states: dictionary.
@@ -491,11 +477,10 @@ class Tree(Graph):
             node.parent_predicate = parent_predicate
         return node
 
-    def __predict__(self,sample,node,categories):
+    def __predict__(self,sample,node):
         """
         :param sample: Series sample to classify.
         :param node: current node.
-        :param categories: dictionary from DecisionTrees.
         :return: class label.
         """
         if node.type!='leaf':
@@ -510,14 +495,14 @@ class Tree(Graph):
                     categorial = False
                 if categorial:
                     if float(node.pred_value)==float(val):
-                        return self.__predict__(sample,node,self.categories)
+                        return self.__predict__(sample,node)
                 else:
                     if node.isBigger==False:
                         if float(val) <= float(node.pred_value):
-                            return self.__predict__(sample, node, self.categories)
+                            return self.__predict__(sample, node)
                     else:
                         if float(val) > float(node.pred_value):
-                            return self.__predict__(sample, node, self.categories)
+                            return self.__predict__(sample, node)
 
         else:
             return node.label
