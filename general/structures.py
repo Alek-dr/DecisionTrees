@@ -1,4 +1,5 @@
 from numpy import ravel
+from collections import deque
 
 class Graph():
 
@@ -60,18 +61,36 @@ class Graph():
         return depth
 
     def get_depth(self):
+        vertices = deque()
         if len(self.vertices)==0:
             return 0
-        vertices = [self.vertices[0]]
-        max_depth = 1
-        for v in vertices:
-            ch_id = self.get_child(v.id)
-            vertices.pop()
+        vertices.append([self.vertices[0].id])
+        struct = {1:[self.vertices[0].id]}
+        i = 1
+        while len(vertices)>0:
+            i += 1
+            lev_v = vertices.pop()
+            ch_id = []
+            for v in lev_v:
+                ch_id.extend(self.get_child(v))
             if len(ch_id)>0:
-                max_depth+=1
-            for ch in ch_id:
-                vertices.append(self.get_node(ch))
-        return max_depth
+                vertices.insert(0,ch_id)
+                struct[i] = ch_id
+        max_depth = max(struct, key=int)
+        return max_depth, struct
+
+    def gropb_by_parent(self,vertices):
+        parent_child = {}
+        for v in vertices:
+            p = self.get_parent(v)
+            if p in parent_child:
+                childs = parent_child[p]
+                childs.extend([v])
+                parent_child[p] = childs
+            else:
+                parent_child[p] = [v]
+        return parent_child
+
 
 class Node():
 
