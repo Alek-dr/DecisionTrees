@@ -23,11 +23,18 @@ class Graph():
         if isinstance(edge, list) and (len(edge)==2):
             self.__edges.append(edge)
 
-    def delete_edge(self,edge):
+    def del_edge(self,edge):
         if edge in self.__edges:
             self.__edges.remove(edge)
         else:
             raise Exception("Edge not in graph")
+
+    def del_vertex(self,id,parent_id=None):
+        if parent_id==None:
+            parent_id = self.get_parent(id)
+        node = self.get_node(id)
+        self.__vertices.remove(node)
+        self.del_edge([parent_id,id])
 
     def get_node(self,id):
         for node in self.vertices:
@@ -60,37 +67,61 @@ class Graph():
             parent = self.get_parent(parent)
         return depth
 
-    def get_depth(self):
+    def level_struct(self, only_leaf=False):
+        """
+        :return: max depth, dict struct which contains level and it's vertices
+        """
         vertices = deque()
         if len(self.vertices)==0:
             return 0
         vertices.append([self.vertices[0].id])
         struct = {1:[self.vertices[0].id]}
         i = 1
+        leaf = []
         while len(vertices)>0:
             i += 1
             lev_v = vertices.pop()
             ch_id = []
-            for v in lev_v:
-                ch_id.extend(self.get_child(v))
+            if only_leaf:
+                for v in lev_v:
+                    chds = self.get_child(v)
+                    for chd in chds:
+                        grand_child = self.get_child(chd)
+                        if not grand_child:
+                            leaf.append(chd)
+                        ch_id.extend([chd])
+            else:
+                for v in lev_v:
+                    ch_id.extend(self.get_child(v))
             if len(ch_id)>0:
                 vertices.insert(0,ch_id)
                 struct[i] = ch_id
         max_depth = max(struct, key=int)
+        if only_leaf:
+            for k,v in struct.items():
+                v_ = v.copy()
+                for node in v_:
+                    if node not in leaf:
+                        struct[k].remove(node)
+                del v_
         return max_depth, struct
 
-    def gropb_by_parent(self,vertices):
+    def gropb_by_parent(self,vert_levels):
+        """
+        :param vert_levels: dict key - level, values - vertices
+        :return: dict, key - parent, values - childs
+        """
         parent_child = {}
-        for v in vertices:
-            p = self.get_parent(v)
-            if p in parent_child:
-                childs = parent_child[p]
-                childs.extend([v])
-                parent_child[p] = childs
-            else:
-                parent_child[p] = [v]
+        for lev, vertices in vert_levels.items():
+            for v in vertices:
+                p = self.get_parent(v)
+                if (lev,p) in parent_child:
+                    childs = parent_child[(lev,p)]
+                    childs.extend([v])
+                    parent_child[(lev,p)] = childs
+                else:
+                    parent_child[(lev,p)] = [v]
         return parent_child
-
 
 class Node():
 

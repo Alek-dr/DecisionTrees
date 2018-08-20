@@ -1,6 +1,7 @@
 from general.structures import *
-from general.criterions import entropy, gini, D, D_continous, criterions
+from general.criterions import *
 from numpy import abs, round, arange, average, log2
+from scipy.stats import t
 
 class DecisionBinaryTree(BinaryTree):
 
@@ -429,6 +430,7 @@ class Tree(Graph):
             depth = self.get_rel_depth(parent_id)
         if self.max_depth != -1 and depth == self.max_depth-1:
             node = self.__make_node__(df, isBigger, node_id, pred_value, parent_predicate)
+            node.probability = self.__probability__(df)
             # Add node to the graph
             self.add_vertex(node)
             if node_id != 0:
@@ -443,6 +445,7 @@ class Tree(Graph):
                 node.pred_value = pred_value
             if parent_predicate != None:
                 node.parent_predicate = parent_predicate
+            node.probability = self.__probability__(df)
             # Add node to the graph
             self.add_vertex(node)
             if node_id != 0:
@@ -462,8 +465,6 @@ class Tree(Graph):
     def __make_node__(self,df,isBigger,node_id,pred_value,parent_predicate):
         numb = df[self.target].value_counts()
         prob = round(numb.max() / len(df), 2)
-        if prob == 1:
-            prob=None
         if isBigger == None:
             categorial = True
         else:
@@ -476,6 +477,10 @@ class Tree(Graph):
         if parent_predicate != None:
             node.parent_predicate = parent_predicate
         return node
+
+    def __probability__(self,df):
+        numb = df[self.target].value_counts()
+        return round(numb.max() / len(df), 2)
 
     def __predict__(self,sample,node):
         """
@@ -507,5 +512,40 @@ class Tree(Graph):
         else:
             return node.label
 
-
-
+    def postpruing(self,df,q=0.75):
+        depth, levels = self.level_struct(only_leaf=True)
+        par_childs = self.gropb_by_parent(levels)
+        max_depth = max(levels,key=int)
+        n = df.shape[0]
+        z = t.ppf(q=q,df=n-1)
+        was_pruned = False
+        for level in reversed(range(1,max_depth+1)):
+            lev_keys = [key for key in par_childs.keys() if key[0]==level]
+            for lk in lev_keys:
+                par_node = self.get_node(lk[1])
+                par_error = est_err(1-par_node.probability,z,par_node.samples)
+                childs = par_childs[lk]
+                child_error = 0
+                for ch in childs:
+                    node = self.get_node(ch)
+                    f = 1-node.probability
+                    child_error += (node.samples/par_node.samples)*est_err(f,z,node.samples)
+                if child_error >= par_error:
+                    # Prune!
+                    was_pruned = True
+                    class_samples = {}
+                    for ch in childs:
+                        node = self.get_node(ch)
+                        if node.label in class_samples:
+                            sampl = class_samples[node.label]
+                            sampl += node.samples
+                            class_samples[node.label] = sampl
+                        else:
+                            class_samples[node.label] = node.samples
+                        self.del_vertex(ch,par_node.id)
+                    # Find class
+                    max_label = max(class_samples.keys(), key=(lambda k: class_samples[k]))
+                    par_node.label = max_label
+                    par_node.type = 'leaf'
+        if was_pruned:
+            self.postpruing(df,q)

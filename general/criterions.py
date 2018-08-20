@@ -1,6 +1,8 @@
-from numpy import log2, square, nan, inf
+from numpy import log2, square, nan, inf, sqrt
 
 criterions = ['entropy','gain_ratio','gini','D']
+
+#region Splitting criterions
 
 def entropy(df,s,states):
     entr = 0
@@ -51,6 +53,15 @@ def D_continous(df,attribute,target,trsh):
             diff = (df[target]!=row[target])
             d += diff[diff==True].shape[0]
     return d
+
+#endregion
+
+#region pruning estimations
+
+def est_err(f,z,n):
+    num = f + (z**2)/(2*n) + z*sqrt((f/n) - ((f**2)/n) + ((z**2)/(4*n**2)))
+    den = 1 + (z**2)/n
+    return round(num/den,2)
 
 
 

@@ -1,12 +1,12 @@
 from trees.decison_trees import *
 from general.help_functions import get_category
 
-def add_node_label(node,categories,target,criteria,write_index=False,write_samles=False,write_criteria=True):
+def add_node_label(node,categories,target,criteria,write_index=False,write_samles=False,write_criteria=True,write_prob=True):
     label = ""
     if write_index==True:
         label += "Id = {}\n".format(node.id)
     if node.parent_predicate!=None:
-        # If feature is cacegorial
+        # If feature is categorial
         if node.parent_predicate in categories.keys():
             states = categories[node.parent_predicate]
             for k,v in states.items():
@@ -32,11 +32,14 @@ def add_node_label(node,categories,target,criteria,write_index=False,write_samle
                 label += "Gini = {}\n".format(node.criteria)
             elif criteria=='D':
                 label += "D = {}\n".format(node.criteria)
+    if write_prob == True:
+        if node.probability!=None:
+            label += "Prob = {}\n".format(node.probability)
     if write_samles==True:
         if node.samples!=None:
             label+="Samples = {}\n".format(node.samples)
     if node.type=="leaf":
-        if node.probability!=None:
+        if (node.probability!=None) & (write_prob==False):
             label += "Prob = {}\n".format(node.probability)
         if node.label!=None:
             if node.label=='-':
