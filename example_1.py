@@ -12,10 +12,13 @@ sample = data_set.copy()
 params = {'criteria':'entropy','postprune':True}
 tree.learnC45(data_set,'win',params)
 
-# tree.learnC45(data_set,'Play', criteria='D')
-#
-# for i,row in sample.iterrows():
-#     label = tree.predict(row)
-#     print('{} {}'.format(i+1,label))
+predict = []
+for i,row in sample.iterrows():
+    label = tree.predict(row)
+    predict.append(label)
 
-dot_convertor.export(tree,"output/tree/zenit4")
+sample['predict'] = predict
+
+print(sample)
+
+#dot_convertor.export(tree,"output/tree/zenit4")

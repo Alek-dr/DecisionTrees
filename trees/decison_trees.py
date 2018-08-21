@@ -71,11 +71,11 @@ class DecisonTree():
     def predict(self,sample):
         label = ''
         if isinstance(sample,Series):
-            sample = convert(sample,self.categories)
+            sample = convert(sample.copy(),self.tree.categories)
             if isinstance(self.tree,Tree):
                 root = self.tree.get_node(0)
-                label = self.tree.__predict__(sample,root,self.categories)
-                label = get_category(self.categories, self.target, label)
+                label = self.tree.__predict__(sample,root)
+                label = get_category(self.tree.categories, self.tree.target, label)
         return label
 
     def print_tree(self):
