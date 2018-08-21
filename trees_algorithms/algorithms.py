@@ -2,6 +2,7 @@ from general.structures import *
 from general.criterions import *
 from numpy import abs, round, arange, average, log2
 from scipy.stats import t
+from collections import deque
 
 class DecisionBinaryTree(BinaryTree):
 
@@ -488,7 +489,7 @@ class Tree(Graph):
         :param node: current node.
         :return: class label.
         """
-        if node.type!='leaf':
+        if node.type != 'leaf':
             p = node.predicate
             val = sample[p]
             child = self.get_child(node.id)
@@ -530,22 +531,35 @@ class Tree(Graph):
                     node = self.get_node(ch)
                     f = 1-node.probability
                     child_error += (node.samples/par_node.samples)*est_err(f,z,node.samples)
+                del childs
                 if child_error >= par_error:
                     # Prune!
                     was_pruned = True
-                    class_samples = {}
-                    for ch in childs:
-                        node = self.get_node(ch)
-                        if node.label in class_samples:
-                            sampl = class_samples[node.label]
-                            sampl += node.samples
-                            class_samples[node.label] = sampl
-                        else:
-                            class_samples[node.label] = node.samples
-                        self.del_vertex(ch,par_node.id)
+                    class_samples = self.__get_leaf_prob__(par_node.id)
+                    self.del_subtree(par_node.id)
                     # Find class
                     max_label = max(class_samples.keys(), key=(lambda k: class_samples[k]))
                     par_node.label = max_label
                     par_node.type = 'leaf'
         if was_pruned:
             self.postpruing(df,q)
+
+    def __get_leaf_prob__(self,id):
+        ### BFS ###
+        class_samples = {}
+        vertices = deque()
+        vertices.append(id)
+        while len(vertices)>0:
+            v = vertices.pop()
+            childs = self.get_child(v)
+            vertices.extendleft(childs)
+            for ch in childs:
+                node = self.get_node(ch)
+                if node.type == 'leaf':
+                    if node.label in class_samples:
+                        sampl = class_samples[node.label]
+                        sampl += node.samples
+                        class_samples[node.label] = sampl
+                    else:
+                        class_samples[node.label] = node.samples
+        return class_samples

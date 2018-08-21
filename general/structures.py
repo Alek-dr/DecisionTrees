@@ -36,6 +36,16 @@ class Graph():
         self.__vertices.remove(node)
         self.del_edge([parent_id,id])
 
+    def del_subtree(self,id):
+        childs = self.get_child(id)
+        vertices = deque()
+        vertices.extendleft(childs)
+        while len(vertices) > 0:
+            v = vertices.pop()
+            childs = self.get_child(v)
+            vertices.extendleft(childs)
+            self.del_vertex(v)
+
     def get_node(self,id):
         for node in self.vertices:
             if node.id == id:
